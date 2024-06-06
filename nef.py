@@ -1,16 +1,31 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
 from starlette.responses import RedirectResponse
 import imaplib
 import email
 from email.header import decode_header
-import webbrowser
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
+import requests
+import schedule
+import time
+import threading
 
 app = FastAPI()
+
+def check_alive():
+    try:
+        response = requests.get("https://nelfix.onrender.com/alive")
+        print("Alive endpoint response:", response.status_code)
+    except Exception as e:
+        print(f"Error calling alive endpoint: {e}")
+
+def schedule_alive_check():
+    schedule.every(10).minutes.do(check_alive)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+@app.on_event("startup")
+async def startup_event():
+    threading.Thread(target=schedule_alive_check, daemon=True).start()
 
 @app.get("/")
 async def redirect_to_link():
@@ -72,7 +87,7 @@ async def redirect_to_link():
                                 continue
                             if "是，這是我本人" in body:
                                 index = body.find("是，這是我本人")
-                                link=''
+                                link = ''
                                 while True:
                                     if body[index+10] != ']':
                                         link = link + body[index+10]
@@ -90,6 +105,12 @@ async def redirect_to_link():
     # 重定向到 link
     return RedirectResponse(url=link)
 
+
+@app.get("/alive")
+async def alive():
+    print("alive")
+    return {"status": "alive"}
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run('nef:app', host="0.0.0.0", port=8880 ,reload=True)
+    uvicorn.run('nef:app', host="0.0.0.0", port=8880, reload=True)
