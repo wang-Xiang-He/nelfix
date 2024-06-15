@@ -31,7 +31,7 @@ async def startup_event():
 async def redirect_to_link():
     # 帳戶信息
     username = "cming0236@gmail.com"
-    password = "uhck rdsm bgwt uzob"
+    password = "uahq oaup jtoc oaji"
 
     # 連接到IMAP服務器
     mail = imaplib.IMAP4_SSL("imap.gmail.com")
